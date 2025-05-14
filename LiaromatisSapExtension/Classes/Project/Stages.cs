@@ -134,7 +134,7 @@ namespace LiaromatisSapExtension.Classes.Project
                                 INNER JOIN [@DDS_PATHL] T2 ON T2.DocEntry = T1.U_Path
                                 INNER JOIN OPMG T3 ON T3.FIPROJECT = T1.Project
                                 INNER JOIN PMG1 T4 ON T4.AbsEntry = T3.AbsEntry
-                                INNER JOIN PMG4 T5 ON T5.AbsEntry = T4.AbsEntry AND T4.POS = T5.StageID AND T1.DocEntry = T5.DocEntry AND T1.LineNum = T5.LineNum
+                                INNER JOIN PMG4 T5 ON T5.AbsEntry = T4.AbsEntry AND T4.LineId = T5.StageID AND T1.DocEntry = T5.DocEntry AND T1.LineNum = T5.LineNum
                                 LEFT JOIN OPOR T6 ON T6.DocEntry = T1.BaseEntry
                                 INNER JOIN [@DDS_PATH] T7 ON T7.DocEntry = T2.DocEntry
                                 WHERE T5.TYP = 20
