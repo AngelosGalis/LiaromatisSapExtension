@@ -1,0 +1,53 @@
+USE [SBO_LIAROMATIS_LIVE]
+GO
+/****** Object:  UserDefinedFunction [dbo].[DDS_F_StrumisPck]    Script Date: 11/4/2019 4:57:40 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER FUNCTION [dbo].[DDS_F_StrumisPck]
+(
+	@PckName AS NVARCHAR(50)
+)
+
+RETURNS
+@PckLIST TABLE
+(
+	[ContractMark] NVARCHAR(100),
+	[Description] NVARCHAR(1000),
+	[MainMember] NVARCHAR(100),
+	[PaintFinish] NVARCHAR(50),
+	[Length] FLOAT,
+	[Width] FLOAT,
+	[UnitWeight] FLOAT,
+	[Package] NVARCHAR(50),
+	[Drawing] NVARCHAR(100),
+	[SITEDELIVERYNOTE] NVARCHAR(50),
+	[Contract] NVARCHAR(50),
+	[Qty] INT
+)
+
+AS BEGIN
+
+INSERT INTO @PckLIST
+
+SELECT ContractMark.Name AS ContractMark, ContractMark.Description AS Description, ContractMark.MainMemberItemName AS MainMember,
+ContractMark.PaintFinish AS PaintFinish, ContractMark.MainMemberLength AS Length, ContractMark.MainMemberWidth AS Width , ContractMark.UnitWeight AS UnitWeight ,ProductionPackage.Name AS Package, ContractDrawing.Name AS Drawing, '' AS SITEDELIVERYNOTE,
+Contract.Name AS Contract, Count(ContractMark.MarkID) AS Qty
+FROM [liarserver2\acecad].[Liaromatis].[dbo].[ProductionPackage]
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionPackageItem] on ProductionPackageItem.ProductionPackageID=ProductionPackage.ProductionPackageID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionWorkOrder] on ProductionWorkOrder.ProductionWorkOrderID = ProductionPackageItem.ProductionWorkOrderID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractMark] on ContractMark.markid = ProductionWorkOrder.ContractMarkID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractItem] on ContractItem.ItemID = ProductionWorkOrder.ItemID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[item] on item.ItemID = ProductionWorkOrder.ItemID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[Contract] On ProductionWorkOrder.ContractID = Contract.ContractID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractDrawing] ON ContractMark.ContractDrawingID = ContractDrawing.ContractDrawingID
+WHERE ProductionPackage.name = @PckName
+GROUP BY
+ContractMark.Name , ContractMark.Description , ContractMark.MainMemberItemName ,ContractMark.MainMemberWidth , ContractMark.UnitWeight ,
+ContractMark.PaintFinish , ContractMark.MainMemberLength , ContractDrawing.Name , ProductionPackage.Name ,Contract.Name
+
+RETURN
+
+END

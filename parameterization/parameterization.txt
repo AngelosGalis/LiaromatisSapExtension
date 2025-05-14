@@ -1,0 +1,44 @@
+1) MarkDoc Header Fields 
+   a) GRDocEntry, Goods Receipt DocEntry, Numeric, 10
+   b) Delivery, Delivery, Numeric, 11, Linked to Entities, Link to System Object, Deliveries
+   c) DrfDeliv, DraftDelivery, Numeric, 11, Linked to Entities, Link to System Object, Documents - Drafts
+
+2) MarkDoc Lines Fields 
+   a) Path, Manage Certificate Data, Numeric, Linked to Entitoes, Link to UDO "PATH"
+   b) Cert, Certificate Required, Alphanumeric, 10
+   c) GRLineNum, Goods Receipt LineNum, Numeric, 10
+
+3) UDO "PATH" Code "PATH", Name "PATH"
+    a) TABLE "DDS_PATH" "PATH" Document
+       Fields
+       a) NumAtCard, Supplier Ref. No., Alphanumeric, 100
+       b) ItemCode, Item No., Alphanumeric, 50 
+
+    b) TABLE "DDS_PATHL" "PATH LINES" Document Rows
+       Fields
+       a) Path, Attachment Path, General, Link
+
+4) TABLE "DDS_ATTACHPATH" "Local Attachments Paths" No Object
+   Fields       only the defaults
+   a) Code            b) Name "Paths"
+      ExportPath      px C:\Projects
+      SourcePath         C:\test
+      TargetPath         C:\test2
+
+5) TABLE "DDS_REPORT_UI" "DDS Report UI" No Object
+   Fields       only the defaults
+   a) Code "Menu Uid"  					b) Name "Query Name"
+      px 54273            				   BPCategory
+      px d415099b7bc14cbc8b7aea91cb48c7dd                  ListOfOutstandingCertificates
+
+6) BP Fields 
+   a) Category, Κατηγορίες Συν/ μενου, Numeric, 11, Link to UDO "BPCATEGORIES"
+
+7) CREATE TABLE [dbo].[DDS_T_ListOfOutstandingCertificates](
+	[Project] [nvarchar](20) NOT NULL,
+	[UniqueID] [nvarchar](254) NULL,
+	[UserName] [nvarchar](155) NULL,
+	[AllUniqueID] [nvarchar](4000) NULL)
+
+8) CREATE FUNCTION [dbo].[DDS_F_ListOfOutstandingCertificates]
+

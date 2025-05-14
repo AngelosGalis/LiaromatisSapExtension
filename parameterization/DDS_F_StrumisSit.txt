@@ -1,0 +1,72 @@
+USE [SBO_LIAROMATIS_LIVE]
+GO
+/****** Object:  UserDefinedFunction [dbo].[DDS_F_StrumisSit]    Script Date: 11/11/2020 11:33:37 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER FUNCTION [dbo].[DDS_F_StrumisSit]
+(
+	@SitName AS NVARCHAR(50)
+)
+
+RETURNS
+@SitLIST TABLE
+(
+	[ContractMark] NVARCHAR(100),
+	[Description] NVARCHAR(1000),
+	[MainMember] NVARCHAR(100),
+	[PaintFinish] NVARCHAR(50),
+	[Length] FLOAT,
+	[Width] FLOAT,
+	[UnitWeight] FLOAT,
+	[Package] NVARCHAR(50),
+	[Drawing] NVARCHAR(100),
+	[SITEDELIVERYNOTE] NVARCHAR(50),
+	[Contract] NVARCHAR(50),
+	[Qty] INT
+)
+
+AS BEGIN
+
+INSERT INTO @SitLIST
+
+
+SELECT ContractMark.Name AS ContractMark, ContractMark.Description AS Description, ContractMark.MainMemberItemName AS MainMember,
+ContractMark.PaintFinish AS PaintFinish, ContractMark.MainMemberLength AS Length, ContractMark.MainMemberWidth AS Width , ContractMark.UnitWeight AS UnitWeight ,'' AS Package, ContractDrawing.Name AS Drawing,
+ProductionProposedMovement.Name AS SITEDELIVERYNOTE,Contract.Name AS Contract, Count(ContractMark.MarkID) AS Qty
+FROM [liarserver2\acecad].[Liaromatis].[dbo].[ProductionProposedMovementITEM]
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionProposedMovement] on ProductionProposedMovementItem.ProductionProposedMovementID = ProductionProposedMovement.ProductionProposedMovementID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionWorkOrder] ON ProductionProposedMovementItem.ProductionWorkOrderID =ProductionWorkOrder.ProductionWorkOrderID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractMark] ON ContractMark.MarkID = ProductionWorkOrder.ContractMarkID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractItem] on ContractItem.ItemID = ProductionWorkOrder.ItemID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[item] on item.ItemID = ProductionWorkOrder.ItemID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[Contract] ON ProductionWorkOrder.ContractID = Contract.ContractID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractDrawing] ON ContractMark.ContractDrawingID = ContractDrawing.ContractDrawingID
+WHERE ProductionProposedMovement.NAME = @SitName
+group by ContractMark.Name , ContractMark.Description , ContractMark.MainMemberItemName , ContractMark.PaintFinish , ContractMark.MainMemberLength , ContractMark.MainMemberLength ,
+ContractMark.UnitWeight ,ContractMark.MainMemberWidth ,ProductionProposedMovement.Name , Contract.Name , ContractDrawing.Name
+UNION ALL
+/*for package */
+Select ContractMark.Name As ContractMark, ContractMark.Description As Description, ContractMark.MainMemberItemName As MainMember,
+       ContractMark.PaintFinish As PaintFinish, ContractMark.MainMemberLength As Length, ContractMark.MainMemberWidth As Width,
+       ContractMark.UnitWeight As UnitWeight, ProductionPackage.Name As Package, ContractDrawing.Description As Drawing,
+       ProductionProposedMovement.Name As SITEDELIVERYNOTE, Contract.Name As Contract, Count(ContractMark.MarkID) AS Qty 
+FROM [liarserver2\acecad].[Liaromatis].[dbo].[ProductionPackage] 
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionProposedMovementItem] ON ProductionProposedMovementItem.ProductionPackageID = ProductionPackage.ProductionPackageID 
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionProposedMovement] ON ProductionProposedMovementItem.ProductionProposedMovementID = ProductionProposedMovement.ProductionProposedMovementID 
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionPackageItem] ON ProductionPackageItem.ProductionPackageID = ProductionPackage.ProductionPackageID 
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionWorkOrder] ON ProductionPackageItem.ProductionWorkOrderID = ProductionWorkOrder.ProductionWorkOrderID 
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractMark] ON ContractMark.MarkID = ProductionWorkOrder.ContractMarkID 
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionWorkOrderContract] ON ProductionWorkOrderContract.ProductionWorkOrderContractID = ProductionPackageItem.ProductionWorkOrderContractID 
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[Contract] ON Contract.ContractID = ProductionWorkOrder.ContractID 
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractDrawing] ON ContractMark.ContractDrawingID = ContractDrawing.ContractDrawingID
+WHERE ProductionProposedMovement.Name Like @SitName
+GROUP BY ContractMark.Name, ContractMark.Description, ContractMark.MainMemberItemName, ContractMark.PaintFinish, ContractMark.MainMemberLength, ContractMark.MainMemberWidth,
+         ContractMark.UnitWeight, ProductionPackage.Name, ProductionProposedMovement.Name, Contract.Name, ContractDrawing.Description
+
+
+
+RETURN
+
+END

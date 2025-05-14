@@ -1,0 +1,95 @@
+USE [SBO_LIAROMATIS_LIVE]
+GO
+/****** Object:  UserDefinedFunction [dbo].[DDS_F_ListOfOutstandingCertificates]    Script Date: 11/4/2019 4:53:26 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER FUNCTION [dbo].[DDS_F_ListOfOutstandingCertificates]
+(
+@UserName  NVARCHAR(155)
+)
+
+RETURNS
+@LIST TABLE
+(
+CardCode NVARCHAR(15),
+CardName NVARCHAR(100),
+PO NVARCHAR(10),
+SeriesName NVARCHAR(8),
+PONum INT,
+PODocDate DATETIME,
+GRPONum INT,
+GRPODocDate DATETIME,
+NumatCard NVARCHAR(100),
+GRPOSeriesName NVARCHAR(8),
+ItemCode NVARCHAR(50),
+Dscription NVARCHAR(100),
+U_Cert NVARCHAR(10),
+Length1 NUMERIC (19,6),
+width1 NUMERIC (19,6),
+UomCode NVARCHAR(20),
+unitMsr NVARCHAR(100),
+NumPerMsr NUMERIC (19,6),
+Quantity NUMERIC (19,6),
+DaysFromReceipt INT,
+DocEntry INT, 
+LineNum INT, 
+Project NVARCHAR(20),
+UniqueID NVARCHAR(254) 
+)
+
+AS BEGIN
+
+INSERT INTO @LIST
+
+SELECT T3.CardCode, T3.CardName,R2.Series'PO',N1.SeriesName,R2.DocNum 'PONum',R2.DocDate N'PODocDate',T3.DocNum 'GRPONum',T3.DocDate 'GRPODocDate',
+	   T3.NumatCard,N2.SeriesName 'GRPOSeriesName',
+	   T2.ItemCode,T2.Dscription,T2.U_Cert,T2.Length1,T2.width1,T2.UomCode,T2.unitMsr,T2.NumPerMsr,T2.Quantity,
+	   DATEDIFF(day,GETDATE(),T3.DocDate) 'DaysFromReceipt',
+       T2.DocEntry , T2.LineNum, T2.Project, T4.UniqueID 
+
+FROM [@DDS_PATH] T0
+LEFT JOIN [@DDS_PATHL] T1 ON T1.DocEntry = T0.DocEntry
+RIGHT JOIN PDN1 T2 ON T2.U_Path = T0.DocEntry
+INNER JOIN OPDN T3 ON T2.DocEntry = T3.DocEntry
+INNER JOIN POR1 R1 ON R1.DocEntry = T2.BaseEntry AND R1.LineNum = T2.BaseLine
+INNER JOIN OPOR R2 ON R2.DocEntry = R1.DocEntry
+INNER JOIN OPMG P3 ON P3.FIPROJECT = T2.Project
+INNER JOIN PMG1 T4 ON T4.AbsEntry = P3.AbsEntry
+INNER JOIN PMG4 T5 ON T5.AbsEntry = T4.AbsEntry AND T4.LineID = T5.StageID AND T2.DocEntry = T5.DocEntry AND T2.LineNum = T5.LineNum
+LEFT JOIN NNM1 N1 ON N1.Series = R2.Series 
+LEFT JOIN NNM1 N2 ON N2.Series = T3.Series 
+INNER JOIN DDS_T_ListOfOutstandingCertificates T6 ON T2.Project = T6.Project AND T4.UniqueID = T6.UniqueID
+WHERE T5.TYP = 20 
+AND R2.DocStatus ='C' 
+AND T2.U_Cert !='No' 
+AND T3.CANCELED <> 'Y' 
+AND T3.Canceled <> 'C' 
+AND T0.U_AllInFull = 'No'
+AND T6.UserName = @UserName
+
+
+
+RETURN
+
+END
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

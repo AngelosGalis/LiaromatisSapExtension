@@ -1,0 +1,91 @@
+USE [SBO_LIAROMATIS_LIVE]
+GO
+/****** Object:  UserDefinedFunction [dbo].[DDS_F_StrumisCnt]    Script Date: 11/4/2019 4:54:34 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER FUNCTION [dbo].[DDS_F_StrumisCnt]
+(
+	@CntName AS NVARCHAR(50)
+)
+
+RETURNS
+@CntLIST TABLE
+(
+	[query] INT,
+	[ContainerName] NVARCHAR(50),
+	[ContractMark] NVARCHAR(100),
+	[Description] NVARCHAR(1000),
+	[MainMember] NVARCHAR(100),
+	[PaintFinish] NVARCHAR(50),
+	[Length] FLOAT,
+	[UnitWeight] FLOAT,
+	[UnitArea] FLOAT,
+	[Package] NVARCHAR(50),
+	[SITEDELIVERYNOTE] NVARCHAR(50),
+	[Drawing] NVARCHAR(100),
+	[Contract] NVARCHAR(50),
+	[Qty] INT
+)
+
+AS BEGIN
+
+INSERT INTO @CntLIST
+
+SELECT
+1 as query , ProductionContainer.Name AS ContainerName, ContractMark.Name AS ContractMark, ContractMark.Description AS Description, ContractMark.MainMemberItemName AS MainMember,
+ContractMark.PaintFinish AS PaintFinish, ContractMark.MainMemberLength AS Length, ContractMark.unitweight ,Contractmark.unitarea , '' AS Package, '' AS SITEDELIVERYNOTE, '' AS Drawing, Contract.Name AS Contract, Count(ContractMark.MarkID) AS Qty
+FROM [liarserver2\acecad].[Liaromatis].[dbo].[ProductionContainer]
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionContainerItem] ON ProductionContainerItem.ProductionContainerID = ProductionContainer.ProductionContainerID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionWorkOrder] ON ProductionContainerItem.ProductionWorkOrderID = ProductionWorkOrder.ProductionWorkOrderID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractMark] ON ContractMark.MarkID = ProductionWorkOrder.ContractMarkID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[Contract] ON Contract.ContractID = ProductionWorkOrder.ContractID
+WHERE ProductionContainer.Name = @CntName
+GROUP BY ProductionContainer.Name, Contract.Name, ContractMark.MainMemberItemName, ContractMark.Description, ContractMark.Name, ContractMark.Weight,
+ContractMark.PaintFinish, ContractMark.MainMemberLength , ContractMark.unitweight ,Contractmark.unitarea
+
+UNION
+
+SELECT
+2 as query , ProductionContainer.Name AS ContainerName, ContractMark.Name AS ContractMark, ContractMark.Description AS Description, ContractMark.MainMemberItemName AS MainMember,
+ContractMark.PaintFinish AS PaintFinish, ContractMark.MainMemberLength AS Length, ContractMark.unitweight,Contractmark.unitarea , ProductionPackage.Name AS Package, ProductionProposedMovement.Name AS SITEDELIVERYNOTE,
+ContractDrawing.Name AS Drawing, Contract.Name AS Contract, Count(ContractMark.MarkID) AS Qty
+FROM [liarserver2\acecad].[Liaromatis].[dbo].[ProductionContainer]
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionContainerItem] ON ProductionContainerItem.ProductionContainerID = ProductionContainer.ProductionContainerID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionProposedMovement] ON ProductionContainerItem.ProductionProposedMovementID = ProductionProposedMovement.ProductionProposedMovementID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionProposedMovementItem] ON ProductionProposedMovementItem.ProductionProposedMovementID = ProductionProposedMovement.ProductionProposedMovementID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionPackage] ON ProductionProposedMovementItem.ProductionPackageID = ProductionPackage.ProductionPackageID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionPackageItem] ON ProductionPackageItem.ProductionPackageID = ProductionPackage.ProductionPackageID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionWorkOrder] ON ProductionPackageItem.ProductionWorkOrderID = ProductionWorkOrder.ProductionWorkOrderID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractMark] ON ContractMark.MarkID = ProductionWorkOrder.ContractMarkID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractDrawing] ON ContractMark.ContractDrawingID = ContractDrawing.ContractDrawingID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractListing] ON ContractDrawing.ContractListingID = ContractListing.ContractListingID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[Contract] ON ContractListing.ContractID = Contract.ContractID
+WHERE ProductionContainer.Name = @CntName
+GROUP BY ProductionContainer.Name, ContractMark.Name, ContractMark.Description, ContractMark.MainMemberItemName, ContractMark.PaintFinish,
+ContractMark.MainMemberLength, ProductionPackage.Name, ProductionProposedMovement.Name, ContractDrawing.Name, Contract.Name , ContractMark.unitweight ,Contractmark.unitarea
+
+UNION
+
+SELECT 3 as query , ProductionContainer.Name AS ContainerName, ContractMark.Name AS ContractMark, ContractMark.Description AS Description, ContractMark.MainMemberItemName AS MainMember,
+ContractMark.PaintFinish AS PaintFinish, ContractMark.MainMemberLength AS Length, ContractMark.unitweight ,Contractmark.unitarea , '' AS Package, ProductionProposedMovement.Name AS SITEDELIVERYNOTE, '' AS Drawing,
+Contract.Name AS Contract, Count(ContractMark.MarkID) AS Qty
+FROM [liarserver2\acecad].[Liaromatis].[dbo].[ProductionContainer]
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionContainerItem] on ProductionContainer.ProductionContainerID = ProductionContainerItem.ProductionContainerID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionProposedMovement] on ProductionProposedMovement.ProductionProposedMovementID = ProductionContainerItem.ProductionProposedMovementID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionProposedMovementItem] on ProductionProposedMovementItem.ProductionProposedMovementID = ProductionProposedMovement.ProductionProposedMovementID
+INNER JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ProductionWorkOrder] On ProductionProposedMovementItem.ProductionWorkOrderID =ProductionWorkOrder.ProductionWorkOrderID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractMark] On ContractMark.MarkID = ProductionWorkOrder.ContractMarkID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[ContractItem] on ContractItem.ItemID = ProductionWorkOrder.ItemID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[item] on item.ItemID = ProductionWorkOrder.ItemID
+LEFT JOIN [liarserver2\acecad].[Liaromatis].[dbo].[Contract] On ProductionWorkOrder.ContractID = Contract.ContractID
+WHERE ProductionContainer.Name = @CntName
+GROUP BY ProductionContainer.Name, Contract.Name, ContractMark.MainMemberItemName, ContractMark.Description, ContractMark.Name,
+ContractMark.Weight, ContractMark.PaintFinish, ContractMark.MainMemberLength , ProductionProposedMovement.Name , ContractMark.unitweight ,Contractmark.unitarea
+	
+
+RETURN
+
+END
